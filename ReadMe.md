@@ -17,6 +17,12 @@ Cpu load;
 ```
 OK! CPU used: 2%
 ```
+- **InfoIps:**
+Last version of Intrusion Prevention Service and last update date;
+```
+Intrusion Prevention Service: ips_version:18.184
+Last Update: Tue, Nov 23 2021 07:01:25 PM
+```
 - **InfoGav:**
 Last version of Gateway Antivirus Service and last update date;
 ```
@@ -28,14 +34,23 @@ Counter of current active VPN;
 ```
 VPN active: 6
 ```
+- **Memory:**
+Ram load;
+```
+OK! RAM used: 2,67 / 3,77 GB (71,00 %)
+RAM free: 1,10 GB (29,13 %)
+```
 - **Transfer:**
 Information of file size send and recive.
 ```
 Send 801 GB / Recive 744 GB
+
 WatchGuard transfer info:
+
 Total Data Send:
 898739895 pkg
 801.21 GB
+
 Total Data Recive:
 810715453 pkg
 744.17 GB
@@ -45,25 +60,32 @@ Total Data Recive:
 
 Script bash for check WatchGuard OIDs
 
-**Usage for SNMP 2c:**
-`./check_watchguard.sh -C <SNMP community> -H <host/ip> -t <type to check>`
+    ./check_watchguard.sh -C <SNMP community> -H <host/ip> -t <type to check>
 
 
 ### OPTIONS:
 
 **-C|--community**
-SNMP v2 community string with Read access. Default is 'public'.`
+SNMP v2 community string with Read access. Default is public.`
 
 **-H|--host**
-*[REQUIRED OPTION]* Host name or IP address to check. Default is: localhost.
+*[REQUIRED OPTION]* Host name or IP address to check. Default is localhost.
 
 **-t|--type**
-*[REQUIRED OPTION]* { ActiveConns | Cpu | InfoGav | IpsecTunnelNum | Transfer }
+*[REQUIRED OPTION]* { ActiveConns | Cpu | InfoIps | InfoGav | IpsecTunnelNum | Memory | Transfer }.
 
 **-h|--help**
-Show this help screen
+Show help.
+
+### INFO: Check Watchguard v1.1
+
+    Kalarumeth - https://github.com/Kalarumeth/Check-WatchGuard
+
+### GitHub Supporters:
+
+    kelups
 
 ### EXAMPLES:
 
-`./check_watchguard.sh -C public -H localhost -t InfoGav`
+    ./check_watchguard.sh -C public -H localhost -t InfoGav
 
