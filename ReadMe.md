@@ -44,13 +44,10 @@ RAM free: 1,10 GB (29,13 %)
 Information of file size send and recive.
 ```
 Send 801 GB / Recive 744 GB
-
 WatchGuard transfer info:
-
 Total Data Send:
 898739895 pkg
 801.21 GB
-
 Total Data Recive:
 810715453 pkg
 744.17 GB
