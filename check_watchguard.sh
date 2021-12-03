@@ -6,7 +6,7 @@
 APPNAME=$(basename $0)
 NAME="Check Watchguard"
 AUTHOR="Kalarumeth"
-VERSION="v1.1"
+VERSION="v1.2"
 URL="https://github.com/Kalarumeth/Check-WatchGuard"
 
 # - Default settings for connection
@@ -21,18 +21,9 @@ STATE_CRIT=2
 STATE_UNK=3
 
 # - Range Variables
-
-CPU_OK=7900
-CPU_WA=8900
-CPU_CR=10000
-
-RAM_OK=80
-RAM_WA=80
-RAM_CR=90
-
-CAC_OK=2607000
-CAC_WA=2937000
-CAC_CR=3300000
+WA=80
+CR=90
+CAC_MAX=3300000
 
 # - Default Outputs
 STATE=$STATE_OK
@@ -58,7 +49,6 @@ OID_wgInfoGavService="1.3.6.1.4.1.3097.6.1.3.0"
 OID_wgInfoIpsService="1.3.6.1.4.1.3097.6.1.4"
 
 # - HELP
-
 print_help(){
         echo ''
         echo "Script bash for check WatchGuard OIDs"
@@ -75,19 +65,36 @@ print_help(){
 }
 
 print_usage(){
-        echo "  ./$APPNAME -C <SNMP community> -H <host/ip> -t <type to check>"
+        echo "  ./$APPNAME -C <SNMP community> -H <host/ip> -t <type to check> | -wa <value> -cr <value> | -acm <value>"
 }
 
 print_options(){
         echo 'OPTIONS:'
         echo ''
-        echo "  -C|--community  SNMP v2 community string with Read access. Default is 'public'."
+        echo "  -c|--community          SNMP v2 community string with Read access."
+        echo "                           Default is 'public'."
         echo ''
-        echo "  -H|--host       [REQUIRED OPTION] Host name or IP address to check. Default is: localhost."
+        echo "  -h|--host               [REQUIRED OPTION] Host name or IP address to check."
+        echo "                           Default is: localhost."
         echo ''
-        echo "  -t|--type       [REQUIRED OPTION] { ActiveConns | Cpu | InfoIps | InfoGav | IpsecTunnelNum | Memory | Transfer }."
+        echo "  -t|--type               [REQUIRED OPTION] Select what you need to scan."
+        echo "                           { ActiveConns | Cpu | InfoIps | InfoGav | IpsecTunnelNum | Memory | Transfer }."
         echo ''
-        echo "  -h|--help       Show help."
+        echo "  -wa|--allert-wa         Defines the threshold for Warning,"
+        echo "                           you can set only for ActiveConns - Cpu - Memory."
+        echo "                           Default is: 80."
+        echo ''
+        echo "  -cr|--allert-cr         Defines the threshold for Critical,"
+        echo "                           you can set only for ActiveConns - Cpu - Memory."
+        echo "                           Default is: 90."
+        echo ''
+        echo "  -acm|--activeconns-max  Defines the maximum Active Connections of the firewall,"
+        echo "                           write this number in full without dot, work only for ActiveConns."
+        echo "                           Default is: 3300000"
+        echo ''
+        echo "  -H|--help               Show help."
+        echo ''
+        echo "  -V|--version            Print script version."
 }
 
 print_info(){
@@ -120,11 +127,11 @@ CheckTransferData(){
         echo "Send $TSGB GB / Recive $TRGB GB"
 
         echo "WatchGuard transfer info:"
-        echo ""
+        echo ''
         echo "Total Data Send:"
         echo "  $TSPO pkg"
         echo "  $TSBO GB"
-        echo ""
+        echo ''
         echo "Total Data Recive:"
         echo "  $TRPO pkg"
         echo "  $TRBO GB"
@@ -132,27 +139,32 @@ CheckTransferData(){
 
 # - Check Cpu Utilization
 CheckCpuUtil(){
-
         CPUUTIL=$(snmpwalk -v $SNMPVERSION -c $COMMUNITY $HOST_NAME $OID_wgSystemCpuUtil1)
 
         CPU_STATE=$(echo "$CPUUTIL" | cut -d " " -f 4)
-        CPU_PERC=$(echo "$CPU_STATE" | awk '{ cpu =$1 /100; print cpu "%" }')
+        CPU_PERC=$(echo "$CPU_STATE" | awk '{ cpu = $1 /100; print cpu }')
 
         case 1 in
-            $(($CPU_STATE<= $CPU_OK)))  echo "OK! CPU used: $CPU_PERC"
-                                        exit $STATE_OK ;;       # 0-79%     Ok
-            $(($CPU_STATE<= $CPU_WA)))  echo "WARRING! CPU used: $CPU_PERC"
-                                        exit $STATE_WARN ;;     # 80-89%    Warring
-            $(($CPU_STATE<= $CPU_CR)))  echo "CRITICAL! CPU used: $CPU_PERC"
-                                        exit $STATE_CRIT ;;     # 90-100%   Critical
-                                *)      echo "UNKNOWN! Cpu not found"
-                                        exit $STATE_UNK ;;
+                $(($CPU_PERC <= $WA-1)))
+                        echo "OK! CPU used: $CPU_PERC%"
+                        exit $STATE_OK ;;
+
+                $(($CPU_PERC <= $CR-1)))
+                        echo "WARRING! CPU used: $CPU_PERC%"
+                        exit $STATE_WARN ;;
+
+                $(($CPU_PERC > $MAX-1)))
+                        echo "CRITICAL! CPU used: $CPU_PERC%"
+                        exit $STATE_CRIT ;;
+
+                *)
+                        echo "UNKNOWN! Cpu not found"
+                        exit $STATE_UNK ;;
         esac
 }
 
 # - Check Memory Utilization
 CheckMemory(){
-
         RAMIM=$(snmpwalk -v $SNMPVERSION -c $COMMUNITY $HOST_NAME $OID_wgMemTotalReal)
         RAMAR=$(snmpwalk -v $SNMPVERSION -c $COMMUNITY $HOST_NAME $OID_wgMemAvailReal)
 
@@ -161,47 +173,62 @@ CheckMemory(){
         RAM_ALLK=$(echo "$RAM_ALL" | awk '{ kbyte = $1 /1024/1024; print kbyte }'  | xargs printf "%.2f")
         RAM_FREK=$(echo "$RAM_FRE" | awk '{ kbyte = $1 /1024/1024; print kbyte }'  | xargs printf "%.2f")
         RAM_PERC=$(echo "$RAM_FRE" "$RAM_ALL" | awk '{ ramp = $1 /$2 *100; print ramp }' | xargs printf "%.2f" )
-        RAM_UPERC=$(echo "$RAM_PERC" | awk '{ ramup = 100 - $1; print ramup }' | xargs printf "%.2f" )
+        RAM_UPERC=$(echo "$RAM_PERC" | awk '{ ramup = 100 - $1; print ramup }')
+        RAM_P=$(echo "$RAM_UPERC" | cut -d "." -f1 )
         RAM_USE=$(echo "$RAM_ALL" "$RAM_FRE" | awk '{ used = $1 -$2; print used }' )
         RAM_USEK=$(echo "$RAM_USE" | awk '{ kbyte = $1 /1024/1024; print kbyte }'  | xargs printf "%.2f")
 
         case 1 in
-            $(($RAM_FRE > (100-$RAM_OK)*$RAM_ALL/100))) echo "OK! RAM used: $RAM_USEK / $RAM_ALLK GB ($RAM_UPERC %)"
-                                                        echo "RAM free: $RAM_FREK GB ($RAM_PERC %)"
-                                                        exit $STATE_OK ;;       # 0-79%     Ok
-            $(($RAM_FRE<= (100-$RAM_WA)*$RAM_ALL/100))) echo "WARRING! RAM used: $RAM_USEK / $RAM_ALLK GB ($RAM_UPERC %)"
-                                                        echo "RAM free: $RAM_FREK GB ($RAM_PERC %)"
-                                                        exit $STATE_WARN ;;     # 80-89%    Warring
-            $(($RAM_FRE<= (100-$RAM_CR)*$RAM_ALL/100))) echo "CRITICAL! RAM used: $RAM_USEK / $RAM_ALLK GB ($RAM_UPERC %)"
-                                                        echo "RAM free: $RAM_FREK GB ($RAM_PERC %)"
-                                                        exit $STATE_CRIT ;;     # 90-100%   Critical
-                                                *)      echo "UNKNOWN! RAM not found"
-                                                        exit $STATE_UNK ;;
+                $(($RAM_P <= $WA-1)))
+                        echo "OK! RAM used: $RAM_USEK / $RAM_ALLK GB ($RAM_UPERC%)"
+                        echo "RAM free: $RAM_FREK GB ($RAM_PERC%)"
+                        exit $STATE_OK ;;
+
+                $(($RAM_P <= $CR-1)))
+                        echo "WARRING! RAM used: $RAM_USEK / $RAM_ALLK GB ($RAM_UPERC%)"
+                        echo "RAM free: $RAM_FREK GB ($RAM_PERC%)"
+                        exit $STATE_WARN ;;
+
+                $(($RAM_P > $CR-1)))
+                        echo "CRITICAL! RAM used: $RAM_USEK / $RAM_ALLK GB ($RAM_UPERC%)"
+                        echo "RAM free: $RAM_FREK GB ($RAM_PERC%)"
+                        exit $STATE_CRIT ;;
+                *)
+                        echo "UNKNOWN! RAM not found"
+                        exit $STATE_UNK ;;
         esac
 }
 
 # - Check Current Active Connections
 CheckCurrActiveConns(){
-
         CAC=$(snmpwalk -v $SNMPVERSION -c $COMMUNITY $HOST_NAME $OID_wgSystemCurrActiveConns)
 
         CACO=$(echo "$CAC" | cut -d " " -f 4)
-        CAC_A=$(echo "$CACO" | awk '{ one =$1 /3300000; print one }')
-        CAC_B=$(echo "$CAC_A" | awk '{ perc =$1 *100; print perc }' | xargs printf "%.2f")
-        CAC_TOT=$(echo "Current Active Connections: $CACO of 3.300.000")
+        CAC_PER=$(echo "$CACO $CAC_MAX" | awk '{ perc = $1 /$2 *100; print perc; }')
+        CAC_P=$(echo "$CAC_PER" | cut -d "." -f 1 )
+        CAC_PERC=$(echo "$CAC_PER" | xargs printf "%.2f")
+        CAC_U=$(echo "$CACO" | perl -pe 's/(\d{1,3})(?=(?:\d{3}){1,5}\b)/\1./g')     
+        CAC_M=$(echo "$CAC_MAX" | perl -pe 's/(\d{1,3})(?=(?:\d{3}){1,5}\b)/\1./g')
 
         case 1 in
-            $(($CACO<= $CAC_OK)))       echo "OK! Active Connections used: $CAC_B%"
-                                        echo "$CAC_TOT"
-                                        exit $STATE_OK ;;       # 0-79%     Ok
-            $(($CACO<= $CAC_WA)))       echo "WARRING! Active Connections used: $CAC_B%"
-                                        echo "$CAC_TOT"
-                                        exit $STATE_WARN ;;     # 80-89%    Warring
-            $(($CACO<= $CAC_CR)))       echo "CRITICAL! Active Connections used: $CAC_B%"
-                                        echo "$CAC_TOT"
-                                        exit $STATE_CRIT ;;     # 90-100%   Critical
-                                *)      echo "UNKNOWN! Current Active Connections not found"
-                                        exit $STATE_UNK ;;
+                $(($CAC_P <= $WA-1)))
+                        echo "OK! Active Connections used: $CAC_PERC%"
+                        echo "Current Active Connections: $CAC_U of $CAC_M"
+                        exit $STATE_OK ;;
+
+                $(($CAC_P <= $CR-1)))
+                        echo "WARRING! Active Connections used: $CAC_PERC%"
+                        echo "Current Active Connections: $CAC_U of $CAC_M"
+                        exit $STATE_WARN ;;
+
+                $(($CAC_P > $CR-1)))
+                        echo "CRITICAL! Active Connections used: $CAC_PERC%"
+                        echo "Current Active Connections: $CAC_U of $CAC_M"
+                        exit $STATE_CRIT ;;
+
+                *)
+                        echo "UNKNOWN! Current Active Connections not found"
+                        exit $STATE_UNK ;;
         esac
 }
 
@@ -249,11 +276,11 @@ CheckInfoIpsService(){
 while test -n "$1"; do
 
         case "$1" in
-                --host|-H)
+                --host|-h)              #SNMP Coordinate
                         HOST_NAME=$2
                         shift
                         ;;
-                --comunity|-C)
+                --comunity|-c)
                         COMMUNITY=$2
                         shift
                         ;;
@@ -261,7 +288,19 @@ while test -n "$1"; do
                         CHECK_TYPE=$2
                         shift
                         ;;
-                --help|-h)
+                --activeconns-max|-acm)        
+                        CAC_MAX=$2
+                        shift
+                        ;;
+                --allert-wa|-wa)        #Allert Range
+                        WA=$2
+                        shift
+                        ;;
+                --allert-cr|-cr)
+                        CR=$2
+                        shift
+                        ;;
+                --help|-H)              #Info
                         print_help
                         ;;
                 --version|-V)

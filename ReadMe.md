@@ -1,6 +1,29 @@
 # Check WatchGuard
 
-The following script is used to monitor the basic functions of the WatchGuard M370 firewall via snmpwalk scripts and are processed to provide easy-to-read data. It can be run separately or integrated into **Icinga2** as a monitoring plugin.
+The following script is used to monitor the basic functions of the WatchGuard firewall via snmpwalk scripts and are processed to provide easy-to-read data. It can be run separately or integrated into Icinga2 as a monitoring plugin.
+
+# Update Note
+
+- 1.2
+```
++ Fix Warning and Critical state
++ Add ability to set limits for waring and critical on percentage
++ Add ability to set maximum Active Connections for ActiveConns
++ Set default variable warning(80)
++ Set default variable critical(90)
++ Set default variable maximum active connections(3300000)
+```
+- 1.1
+```
++ Improved the code
++ Add Check Memory
++ Add Check Info Ips Service
++ Removed unnecessary code
+```
+- 1.0
+```
++ Release Script
+```
 
 # Functions
 
@@ -57,22 +80,56 @@ Total Data Recive:
 
 Script bash for check WatchGuard OIDs
 
-    ./check_watchguard.sh -C <SNMP community> -H <host/ip> -t <type to check>
+    ./check_watchguard.sh -c <SNMP community> -h <host/ip> -t <type to check>
 
 
 ### OPTIONS:
 
-**-C|--community**
-SNMP v2 community string with Read access. Default is public.`
+**-c | --community**
+```
+SNMP v2 community string with Read access.
+Default is public.
+```
 
-**-H|--host**
-*[REQUIRED OPTION]* Host name or IP address to check. Default is localhost.
+**-h | --host**
+```
+[REQUIRED OPTION] Host name or IP address to check.
+Default is localhost.
+```
 
-**-t|--type**
-*[REQUIRED OPTION]* { ActiveConns | Cpu | InfoIps | InfoGav | IpsecTunnelNum | Memory | Transfer }.
+**-t | --type**
+```
+[REQUIRED OPTION] Select what you need to scan.
+{ ActiveConns | Cpu | InfoIps | InfoGav | IpsecTunnelNum | Memory | Transfer }.
+```
 
-**-h|--help**
+**-wa | --allert-wa**
+```
+Defines the threshold for Warning, you can set only for ActiveConns - Cpu - Memory.
+Default is: 80.
+```
+
+**-cr | --allert-cr**
+```
+Defines the threshold for Critical, you can set only for ActiveConns - Cpu - Memory.
+Default is: 90.
+```
+
+**-acm | --activeconns-max**
+```
+Defines the maximum Active Connections of the firewall, write this number in full without dot, you can set only for ActiveConns.
+Default is: 3300000
+```
+
+**-H | --help**
+```
 Show help.
+```
+
+**-V | --version**
+```
+Print script version.
+```
 
 ### INFO: Check Watchguard v1.1
 
@@ -84,5 +141,5 @@ Show help.
 
 ### EXAMPLES:
 
-    ./check_watchguard.sh -C public -H localhost -t InfoGav
+    ./check_watchguard.sh -c public -h localhost -t InfoGav
 
