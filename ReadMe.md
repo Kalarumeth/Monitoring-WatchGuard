@@ -4,26 +4,26 @@ The following script is used to monitor the basic functions of the WatchGuard fi
 
 # Update Note
 
-- 1.2
-```
-+ Fix Warning and Critical state
-+ Add ability to set limits for waring and critical on percentage
-+ Add ability to set maximum Active Connections for ActiveConns
-+ Set default variable warning(80)
-+ Set default variable critical(90)
-+ Set default variable maximum active connections(3300000)
-```
-- 1.1
-```
-+ Improved the code
-+ Add Check Memory
-+ Add Check Info Ips Service
-+ Removed unnecessary code
-```
-- 1.0
-```
-+ Release Script
-```
+## 1.2
+
+    +Fix Warning and Critical state
+    +Add ability to set limits for waring and critical on percentage
+    +Add ability to set maximum Active Connections for ActiveConns
+    +Set default variable warning(80)
+    +Set default variable critical(90)
+    +Set default variable maximum active connections(3300000)
+
+## 1.1
+
+    +Improved the code
+    +Add Check Memory
+    +Add Check Info Ips Service
+    +Removed unnecessary code
+
+## 1.0
+
+    +Release Script
+
 
 # Functions
 
@@ -131,7 +131,7 @@ Show help.
 Print script version.
 ```
 
-### INFO: Check Watchguard v1.1
+### INFO: Check Watchguard v1.2
 
     Kalarumeth - https://github.com/Kalarumeth/Check-WatchGuard
 
