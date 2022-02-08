@@ -1,5 +1,8 @@
+<img src="https://img.shields.io/badge/Code-Bash-orange?style=flat-square&logo=GNU%20Bash&logoColor=orange" alt="Bash"> <img src="https://img.shields.io/badge/Device-WatchGuard-red?style=flat-square" alt="Checked Device"> <img src="https://img.shields.io/badge/Release-v1.3-green?style=flat-square" alt="Release">
+
+<img src="https://img.shields.io/badge/Dev by-Kalarumeth-blueviolet?style=flat-square" alt="Dev"> <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License">
+
 # Check WatchGuard
-<img src="https://img.shields.io/badge/Dev by-Kalarumeth-blueviolet?style=flat-square" alt="Dev"> <img src="https://img.shields.io/badge/Code-Bash-orange?style=flat-square&logo=GNU%20Bash&logoColor=orange" alt="Bash"> <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License">
 
 The following script is used to monitor the basic functions of the WatchGuard firewall via snmpwalk scripts and are processed to provide easy-to-read data. It can be run separately or integrated into Icinga2 as a monitoring plugin.
 
