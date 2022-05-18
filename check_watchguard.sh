@@ -59,7 +59,7 @@ Source.HostAlive() {
 }
 
 Source.SNMP() {
-    snmpwalk -v $SNMPVERSION -Oe -c $COMMUNITY $HOST_NAME $1
+    snmpwalk -v $SNMPVERSION -r 1 -t 10 -Oe -c $COMMUNITY $HOST_NAME $1
 }
 
 # - WatchGuard Health Monitoring
