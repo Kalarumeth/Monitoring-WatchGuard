@@ -47,7 +47,7 @@ The following script is used to monitor the basic functions of the WatchGuard fi
 
 1. Download the script and give it privilages for run
 ```
-curl -LJO https://raw.githubusercontent.com/Kalarumeth/Check-WatchGuard/main/check_watchguard.sh
+curl -LJO https://raw.githubusercontent.com/Kalarumeth/Monitoring-WatchGuard/main/check_watchguard.sh
 ```
 
 2. Move to Icinga Plugin Dir
